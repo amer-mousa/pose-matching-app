@@ -1,4 +1,3 @@
-
 import streamlit as st
 import cv2
 import mediapipe as mp
@@ -6,6 +5,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import tempfile
 import os
+import time
 
 st.set_page_config(page_title="تحليل مطابقة المهارات", layout="centered")
 st.title("🎯 تقييم مطابقة المهارة من الفيديو")
@@ -51,33 +51,16 @@ if reference_video:
     ref_landmarks = extract_landmarks_from_video(ref_path)
     st.success(f"✅ تم استخراج {len(ref_landmarks)} إطارًا بنجاح.")
 
-    st.header("🎥 تصوير مباشر بالكاميرا")
-    run_camera = st.button("🔴 ابدأ التسجيل من الكاميرا")
+    st.header("🎥 تسجيل فيديو جديد")
+    uploaded_live_video = st.file_uploader("📸 حمّل فيديو مباشر للمقارنة", type=["mp4", "mov"])
 
-    if run_camera:
-        st.warning("📸 يتم فتح الكاميرا الآن. اضغط على 'Q' من النافذة لإيقاف التسجيل.")
-        live_path = os.path.join(tempfile.gettempdir(), "live_capture.mp4")
-        cap = cv2.VideoCapture(0)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(live_path, fourcc, 10.0, (640, 480))
+    if uploaded_live_video:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as live_tmp:
+            live_tmp.write(uploaded_live_video.read())
+            live_path = live_tmp.name
 
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            out.write(frame)
-            cv2.imshow('اضغط Q لإنهاء التسجيل', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-        cap.release()
-        out.release()
-        cv2.destroyAllWindows()
-
-        st.success("✅ تم التسجيل من الكاميرا.")
         st.video(live_path)
-        st.info("⚙️ يتم تحليل الفيديو ومقارنته...")
-
+        st.info("⚙️ يتم تحليل الفيديو الجديد...")
         live_landmarks = extract_landmarks_from_video(live_path)
         score = calculate_similarity(ref_landmarks, live_landmarks)
         st.success(f"🎯 درجة التطابق: {score * 10:.2f} من 10")
