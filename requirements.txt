@@ -1,6 +1,5 @@
-
-streamlit
-opencv-python
+streamlit==1.35.0
+opencv-python-headless
 mediapipe
-scikit-learn
 numpy
+scikit-learn
